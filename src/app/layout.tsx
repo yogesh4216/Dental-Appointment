@@ -1,13 +1,11 @@
 'use client';
 
-import { Inter, Poppins } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
-import { ReactLenis } from 'lenis/react';
-import Navbar from '@/components/Navbar';
 import { AuthProvider } from '@/context/AuthContext';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const poppins = Poppins({ weight: ['400', '500', '600', '700'], subsets: ['latin'], variable: '--font-poppins' });
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 export default function RootLayout({
   children,
@@ -15,15 +13,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
+      <head>
+        <title>DentalCare+ | Premium Patient Portal</title>
+        <meta name="description" content="Experience the future of dental healthcare. A beautifully designed patient portal for managing appointments, health records, and more." />
+      </head>
       <body>
         <AuthProvider>
-          <ReactLenis root>
-            <div className="app-wrapper flex flex-col" style={{ minHeight: '100vh' }}>
-              <Navbar />
-              <main style={{ flex: 1 }}>{children}</main>
-            </div>
-          </ReactLenis>
+          {children}
         </AuthProvider>
       </body>
     </html>

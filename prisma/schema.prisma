@@ -1,69 +1,109 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// Ensure local SQLite is the provider
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String?       @unique
-  phone        String        @unique
-  passwordHash String?
-  role         String        @default("patient") // 'patient', 'doctor', 'admin'
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String          @id @default(uuid())
+  email         String?         @unique
+  phone         String?         @unique
+  passwordHash  String?
+  role          String          @default("patient") // 'patient', 'doctor', 'admin'
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-  patientInfo  PatientInfo?
-  appointments Appointment[]
+  patientProfile PatientProfile?
+  appointments   Appointment[]
+  notifications  Notification[]
 }
 
-model PatientInfo {
-  id               String   @id @default(uuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id])
-  fullName         String
-  age              Int
-  gender           String
-  address          String?
+model PatientProfile {
+  id                  String          @id @default(uuid())
+  userId              String          @unique
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName           String
+  lastName            String
+  dateOfBirth         DateTime
+  phone               String
+  address             String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
   
-  // Medical
-  diabetes         Boolean  @default(false)
-  bloodPressure    Boolean  @default(false)
-  allergies        String?
-  previousVisit    Boolean  @default(false)
-  previousVisitDate String? // e.g., "2024-05-12"
+  medicalHistory      MedicalHistory?
+}
+
+model MedicalHistory {
+  id                   String         @id @default(uuid())
+  patientProfileId     String         @unique
+  patientProfile       PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  
+  allergies            String?
+  existingConditions   String?
+  medications          String?
+  previousProcedures   String?
+  
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 }
 
 model Doctor {
-  id           String        @id @default(uuid())
-  name         String
-  specialty    String
-  appointments Appointment[]
+  id            String          @id @default(uuid())
+  name          String
+  specialty     String
+  bio           String?
+  
+  appointments  Appointment[]
+  slots         AppointmentSlot[]
+}
+
+model AppointmentSlot {
+  id            String          @id @default(uuid())
+  doctorId      String
+  doctor        Doctor          @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  
+  date          DateTime
+  startTime     String          // e.g., "09:00"
+  endTime       String          // e.g., "09:30"
+  isBooked      Boolean         @default(false)
+  isLocked      Boolean         @default(false) // For slot locking simulation
 }
 
 model Appointment {
-  id          String   @id @default(uuid())
-  patientId   String
-  doctorId    String
-  patient     User     @relation(fields: [patientId], references: [id])
-  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+  id              String        @id @default(uuid())
+  patientId       String
+  doctorId        String
+  patient         User          @relation(fields: [patientId], references: [id])
+  doctor          Doctor        @relation(fields: [doctorId], references: [id])
   
-  appointmentDate String // "2026-10-15"
-  appointmentTime String // "10:00 AM"
-  reason        String
-  painLevel     Int // 0 - 10
-  notes         String?
-  status        String   @default("confirmed") // 'confirmed', 'completed', 'cancelled'
+  date            DateTime
+  time            String
+  reason          String
+  painLevel       Int           // 0 - 10
+  symptoms        String?
+  insuranceInfo   String?
+  status          String        @default("confirmed") // 'confirmed', 'completed', 'cancelled', 'rescheduled'
+  
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
 
-  createdAt   DateTime @default(now())
+model Notification {
+  id            String          @id @default(uuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  message       String
+  type          String          @default("info") // 'info', 'reminder', 'alert'
+  isRead        Boolean         @default(false)
+  
+  createdAt     DateTime        @default(now())
 }

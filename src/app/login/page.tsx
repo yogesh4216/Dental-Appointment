@@ -1,120 +1,107 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { ArrowRight, LogIn } from 'lucide-react';
+import { useActionState } from 'react';
+import { loginAction } from '@/lib/actions/authActions';
 import { motion } from 'framer-motion';
+import { ArrowRight, Eye, EyeOff, Heart, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function LoginPage() {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [isOTP, setIsOTP] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const { login } = useAuth();
+  const [state, formAction, isPending] = useActionState(loginAction, null);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // Simulate backend verification
-    setTimeout(() => {
-      login('patient');
-      router.push('/dashboard');
-    }, 1000);
-  };
+  useEffect(() => {
+    if (state?.success) router.push('/dashboard');
+  }, [state, router]);
 
   return (
-    <div className="container min-h-screen flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass w-full max-w-md p-8 relative overflow-hidden"
-      >
-        {/* Subtle background glow effect */}
-        <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'var(--primary-color)', opacity: 0.1, borderRadius: '50%', filter: 'blur(40px)' }}></div>
+    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-base)', position: 'relative', overflow: 'hidden' }}>
+      {/* Ambient */}
+      <div className="ambient-bg">
+        <div className="ambient-blob blob-1" />
+        <div className="ambient-blob blob-2" />
+      </div>
 
-        <div className="flex justify-center mb-6">
-          <div style={{ padding: '1rem', background: 'var(--gradient-primary)', borderRadius: '50%', color: 'white' }}>
-            <LogIn size={28} />
+      {/* Left Panel — Branding */}
+      <div style={{
+        flex: 1, display: 'none', padding: 60, flexDirection: 'column', justifyContent: 'space-between',
+        background: 'linear-gradient(160deg, #EFF6FF 0%, #F0FDFA 50%, #F5F3FF 100%)',
+        position: 'relative', overflow: 'hidden',
+      }} className="hide-mobile">
+        <style>{`.hide-mobile { display: flex !important; } @media (max-width: 768px) { .hide-mobile { display: none !important; } }`}</style>
+        <div style={{ position: 'absolute', bottom: -100, right: -100, width: 400, height: 400, borderRadius: '50%', background: 'rgba(37,99,235,0.06)', filter: 'blur(80px)' }} />
+
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 22, color: 'var(--text-primary)' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #2563EB, #0D9488)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Heart size={18} color="white" fill="white" />
           </div>
+          DentalCare+
+        </Link>
+
+        <div style={{ maxWidth: 360 }}>
+          <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 16 }}>
+            Welcome back to your <span className="text-gradient">care journey</span>.
+          </h2>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            Access your appointments, health records, and care recommendations — all in one place.
+          </p>
         </div>
 
-        <h2 className="text-center font-bold text-2xl mb-2">Welcome Back</h2>
-        <p className="text-center text-muted mb-8 text-sm">
-          Sign in to view your appointments, prescriptions, and dental records.
-        </p>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>© 2026 DentalCare+. All rights reserved.</p>
+      </div>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-5">
-          <div className="input-group">
-            <label className="input-label font-medium">Email or Phone Number</label>
-            <input 
-              required
-              type="text" 
-              className="input-field shadow-sm" 
-              placeholder="e.g. 555-0123 or abc@abc.com" 
-              value={identifier || ''}
-              onChange={(e) => setIdentifier(e.target.value)}
-            />
-          </div>
-
-          {!isOTP ? (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="input-group">
-              <label className="input-label flex justify-between font-medium">
-                Password
-                <span className="text-primary cursor-pointer text-xs font-semibold hover:underline">Forgot?</span>
-              </label>
-              <input 
-                required
-                type="password" 
-                className="input-field shadow-sm" 
-                placeholder="••••••••" 
-                value={password || ''}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </motion.div>
-          ) : (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="input-group">
-              <label className="input-label font-medium">One-Time Password (OTP)</label>
-              <input 
-                required
-                type="text" 
-                className="input-field shadow-sm text-center tracking-widest text-lg" 
-                placeholder="0 0 0 0 0 0" 
-                maxLength={6}
-              />
-              <p className="text-xs text-muted mt-2 text-right">We sent a code to your device</p>
-            </motion.div>
-          )}
-
-          <button 
-            type="submit" 
-            className="btn btn-primary w-full mt-2 flex items-center justify-center gap-2"
-            disabled={isLoading}
-            style={{ padding: '0.8rem' }}
-          >
-            {isLoading ? 'Authenticating...' : (isOTP ? 'Verify & Login' : 'Secure Login')}
-            {!isLoading && <ArrowRight size={18} />}
-          </button>
-        </form>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-black/5 dark:bg-white/10"></div>
-          <span className="text-xs text-muted font-medium uppercase">Or connect with</span>
-          <div className="h-px flex-1 bg-black/5 dark:bg-white/10"></div>
-        </div>
-
-        <button 
-          onClick={() => setIsOTP(!isOTP)}
-          className="btn btn-secondary w-full"
-          type="button"
+      {/* Right Panel — Form */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          style={{ width: '100%', maxWidth: 420 }}
         >
-          {isOTP ? 'Use Password Instead' : 'Login via OTP (Phone)'}
-        </button>
+          <div style={{ marginBottom: 36 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>Sign in</h1>
+            <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>Enter your credentials to access your portal.</p>
+          </div>
 
-      </motion.div>
+          <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {state?.error && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, background: 'var(--rose-soft)', color: 'var(--rose)', fontSize: 13, fontWeight: 500, border: '1px solid rgba(244,63,94,0.15)' }}>
+                <AlertCircle size={16} /> {state.error}
+              </div>
+            )}
+
+            <div className="input-group">
+              <label className="input-label" htmlFor="email">Email</label>
+              <input id="email" name="email" type="email" className="input-field" placeholder="you@example.com" required />
+            </div>
+
+            <div className="input-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="input-label" htmlFor="password">Password</label>
+                <Link href="/forgot-password" style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>Forgot?</Link>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <input id="password" name="password" type={showPassword ? 'text' : 'password'} className="input-field" placeholder="••••••••" required style={{ paddingRight: 44 }} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary" disabled={isPending} style={{ width: '100%', padding: '14px 24px', fontSize: 15, marginTop: 4 }}>
+              {isPending ? 'Signing in...' : 'Sign In'} <ArrowRight size={18} />
+            </button>
+          </form>
+
+          <p style={{ textAlign: 'center', marginTop: 28, fontSize: 14, color: 'var(--text-secondary)' }}>
+            New to DentalCare+?{' '}
+            <Link href="/signup" style={{ color: 'var(--accent)', fontWeight: 600 }}>Create an account</Link>
+          </p>
+        </motion.div>
+      </div>
     </div>
   );
 }
